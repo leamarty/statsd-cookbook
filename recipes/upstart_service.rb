@@ -32,7 +32,7 @@
 
 # Set up our service.
 supervisor_service "statsd" do
-  command "su -s /bin/sh -c 'exec \"$0\" \"$@\"' #{node['statsd']['user']} -- $(which node) stats.js #{node['statsd']['config_dir']}/config.js 2>&1 >> #{node['statsd']['log_file']}"
+  command "su -s /bin/sh -c 'exec \"$0\" \"$@\"' #{node['statsd']['user']} -- node stats.js #{node['statsd']['config_dir']}/config.js 2>&1 >> #{node['statsd']['log_file']}"
   #command "#{node['statsd']['path']}/node_modules/aws-kcl/bin/kcl-bootstrap -e -p ./properties/clicks-quickstats.properties --java /usr/bin/java"
   process_name "statsds_%(process_num)s"
   numprocs 1
