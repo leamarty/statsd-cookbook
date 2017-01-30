@@ -4,22 +4,105 @@
 # applications. It aggregates this data and flushes it to a storage backend
 # (typically Graphite) at regular intervals.
 #
-description "Network daemon for aggregating statistics"
-author      "Librato"
+#description "Network daemon for aggregating statistics"
+#author      "Librato"
 
-start on (local-filesystems and net-device-up IFACE!=lo)
+#start on (local-filesystems and net-device-up IFACE!=lo)
 
-respawn
-respawn limit 10 5
+#respawn
+#respawn limit 10 5
 
-chdir <%= node['statsd']['path'] %>
+#chdir <%= node['statsd']['path'] %>
 
-pre-start script
-    NODE_BIN=$(which nodejs || which node)
-    [ -n $NODE_BIN ] || { stop; exit 0; }
-end script
+#pre-start script
+#    NODE_BIN=$(which nodejs || which node)
+#    [ -n $NODE_BIN ] || { stop; exit 0; }
+#end script
 
-script
-    NODE_BIN=$(which nodejs || which node)
-    su -s /bin/sh -c 'exec "$0" "$@"' <%= node['statsd']['user'] %> -- $NODE_BIN stats.js <%= node['statsd']['config_dir'] %>/config.js 2>&1 >> <%= node['statsd']['log_file'] %>
-end script
+#script
+#    NODE_BIN=$(which nodejs || which node)
+#    su -s /bin/sh -c 'exec "$0" "$@"' <%= node['statsd']['user'] %> -- $NODE_BIN stats.js <%= node['statsd']['config_dir'] %>/config.js 2>&1 >> <%= node['statsd']['log_file'] %>
+#end script
+
+
+!/bin/bash
+#
+# StatsD
+#
+# chkconfig: 3 50 50
+# description: StatsD init.d
+. /etc/rc.d/init.d/functions
+
+NODE_BIN=$(which nodejs || which node)
+
+prog=statsd
+STATSDDIR=<%= node['statsd']['path'] %>
+statsd=./stats.js
+LOG=<%= node['statsd']['log_file'] %>
+ERRLOG=/var/log/statsderr.log
+CONFFILE=<%= node['statsd']['config_dir'] %>/config.js
+pidfile=/var/run/statsd/statsd.pid
+lockfile=/var/lock/subsys/statsd
+RETVAL=0
+STOP_TIMEOUT=${STOP_TIMEOUT-10}
+
+start() {
+  echo -n $"Starting $prog: "
+  cd ${STATSDDIR}
+
+  # See if it's already running. Look *only* at the pid file.
+  if [ -f ${pidfile} ]; then
+    failure "PID file exists for statsd"
+    RETVAL=1
+  else
+    # Run as process
+    su -s /bin/sh -c 'exec "$0" "$@"' <%= node['statsd']['user'] %> -- $NODE_BIN ${statsd} ${CONFFILE} 2>&1 >> ${LOG}
+    RETVAL=$?
+
+    # Store PID
+    echo $! > ${pidfile}
+
+    # Success
+    [ $RETVAL = 0 ] && success "statsd started"
+  fi
+
+  echo
+  return $RETVAL
+}
+
+stop() {
+  echo -n $"Stopping $prog: "
+  killproc -p ${pidfile}
+  RETVAL=$?
+  echo
+  [ $RETVAL = 0 ] && rm -f ${pidfile}
+}
+
+# See how we were called.
+case "$1" in
+  start)
+  start
+  ;;
+  stop)
+  stop
+  ;;
+  status)
+  status -p ${pidfile} ${prog}
+  RETVAL=$?
+  ;;
+  restart)
+  stop
+  start
+  ;;
+  condrestart)
+  if [ -f ${pidfile} ] ; then
+    stop
+    start
+  fi
+  ;;
+  *)
+  echo $"Usage: $prog {start|stop|restart|condrestart|status}"
+  exit 1
+esac
+
+exit $RETVAL
