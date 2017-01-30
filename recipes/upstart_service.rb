@@ -18,7 +18,7 @@
 #
 
 # Install our init script.
-template '/etc/init/statsd.conf' do
+template '/etc/init.d/statsd' do
   source 'upstart.conf.erb'
   mode 0644
   notifies :restart, 'service[statsd]', :delayed
