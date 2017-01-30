@@ -30,5 +30,5 @@ end
 include_recipe "statsd::#{node['statsd']['init_style']}_service"
 
 service 'statsd' do
-  action service_status
+  action :status
 end
