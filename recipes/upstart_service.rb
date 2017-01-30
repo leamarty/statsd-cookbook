@@ -26,7 +26,7 @@ end
 
 # Set up our service.
 service "statsd" do
-  supports :restart => true, :start => true, :stop => true, :reload => true
+  supports :restart => true, :start => true, :stop => true, :reload => true, :status => true
   action :nothing
 end 
 
