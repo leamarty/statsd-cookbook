@@ -25,8 +25,23 @@ template '/etc/init.d/statsd' do
 end
 
 # Set up our service.
-service "statsd" do
-  supports :restart => true, :start => true, :stop => true, :reload => true, :status => true
-  action :nothing
-end 
+#service "statsd" do
+#  supports :restart => true, :start => true, :stop => true, :reload => true, :status => true
+#  action :nothing
+#end 
 
+# Set up our service.
+supervisor_service "statsd" do
+  command "su -s /bin/sh -c 'exec "$0" "$@"' #{node['statsd']['user']} -- $(which node) stats.js #{node['statsd']['config_dir']}/config.js 2>&1 >> #{node['statsd']['log_file']}"
+  #command "#{node['statsd']['path']}/node_modules/aws-kcl/bin/kcl-bootstrap -e -p ./properties/clicks-quickstats.properties --java /usr/bin/java"
+  process_name "statsds_%(process_num)s"
+  numprocs 1
+  autorestart true
+  autostart true
+  stopasgroup true
+  directory "#{node['statsd']['path']}"
+  startsecs 20
+  stderr_logfile "/var/log/statsd_stderr.log"
+  stdout_logfile "/var/log/statsd_stdout.log"
+  action :enable
+end
