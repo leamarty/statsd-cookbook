@@ -20,6 +20,8 @@
 # Install our init script.
 template '/etc/init.d/statsd' do
   source 'upstart.conf.erb'
+  owner node['statsd']['user']
+  group node['statsd']['group']
   mode 0644
   notifies :restart, 'service[statsd]', :delayed
 end
