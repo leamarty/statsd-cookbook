@@ -15,7 +15,7 @@
 #chdir <%= node['statsd']['path'] %>
 
 #pre-start script
-#    NODE_BIN=$(which nodejs || which node)
+#    NODE_BIN=$(which node)
 #    [ -n $NODE_BIN ] || { stop; exit 0; }
 #end script
 
